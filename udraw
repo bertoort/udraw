@@ -1,0 +1,57 @@
+#%BANGPERL%
+
+use Text::Tabs qw(expand);
+use Text::Wrap qw(wrap fill $columns);
+use File::Basename;
+use Getopt::Std;
+use Cwd;
+
+$version = "0.0.1";
+$progname = basename($0);
+$cowpath = $ENV{'COWPATH'};
+
+$Text::Wrap::initial_tab = 8;
+$Text::Wrap::subsequent_tab = 8;
+
+%opts = (
+    'f'		=>	$cowpath . '/default.cow',
+);
+
+getopts('f:h', \%opts);
+
+&display_usage if $opts{'h'};
+
+$the_cow = "";
+
+&get_cow;
+print $the_cow;
+
+sub get_cow {
+    my $f = $opts{'f'};
+    my $full = "";
+    if ($opts{'f'} =~ m,/,) {
+	$full = $opts{'f'};
+    } else {
+	for my $d (split(/:/, $cowpath)) {
+	    if (-f "$d/$f") {
+		$full = "$d/$f";
+		last;
+	    } elsif (-f "$d/$f.cow") {
+		$full = "$d/$f.cow";
+		last;
+	    }
+	}
+	if ($full eq "") {
+	    die "$progname: Could not find $f cowfile!\n";
+	}
+    }
+    do $full;
+    die "$progname: $@\n" if $@;
+}
+
+sub display_usage {
+	die <<EOF;
+udraw version $version
+Usage: $progname [-h] [-f cowfile] 
+EOF
+}
